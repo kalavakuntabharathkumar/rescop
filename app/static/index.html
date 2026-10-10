@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leadtri Research Copilot</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#141c31;--line:#2a3857;--text:#eef3ff;--muted:#aab7d2;--accent:#86d5c4}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top right,#1b3450,var(--bg) 42%);color:var(--text);font:15px/1.5 system-ui,Segoe UI,sans-serif}
+main{max-width:1100px;margin:auto;padding:36px 20px}.eyebrow{color:var(--accent);letter-spacing:.15em;text-transform:uppercase;font-size:12px}
+h1{font-size:clamp(30px,5vw,48px);line-height:1.1;margin:8px 0}p{color:var(--muted)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px}
+section{background:rgba(20,28,49,.92);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 14px 50px #0002}
+label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}input,textarea{width:100%;border:1px solid var(--line);border-radius:9px;background:#0d1426;color:var(--text);padding:11px;font:inherit}
+textarea{min-height:115px;resize:vertical}button{background:var(--accent);color:#09221f;border:0;border-radius:9px;padding:10px 15px;font-weight:700;cursor:pointer;margin-top:10px}
+button:hover{filter:brightness(1.06)}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0a1020;border:1px solid var(--line);border-radius:10px;padding:13px;color:#dce7ff;min-height:65px}
+.full{grid-column:1/-1}.status{font-size:12px;color:var(--accent)}@media(max-width:720px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style></head>
+<body><main>
+<div class="eyebrow">Research operations · local demo</div><h1>Leadtri Research Copilot</h1>
+<p>Index source material, retrieve evidence, and inspect a transparent research workflow. Demo output is not investment advice.</p>
+<div class="grid">
+<section><h2>01 / Add a source</h2><label>Document title</label><input id="title" value="Market outlook notes"><label>Source label</label><input id="source" value="analyst-notes"><label>Document text (20+ characters)</label><textarea id="doc">Central banks are monitoring inflation, labor market resilience, and credit conditions. Analysts should compare official releases with company filings and identify the date of each observation.</textarea><button onclick="addDoc()">Index document</button><pre id="addOut">Ready to index.</pre></section>
+<section><h2>02 / Research question</h2><label>Question</label><textarea id="question">What risks are mentioned about inflation and credit conditions?</textarea><button onclick="research()">Run research workflow</button><pre id="researchOut">Workflow results appear here.</pre></section>
+<section class="full"><h2>03 / Search corpus</h2><label>Search query</label><input id="query" value="inflation credit conditions"><button onclick="searchDocs()">Search evidence</button><pre id="searchOut">Search results appear here.</pre><div class="status" id="health">Checking API…</div></section>
+</div></main>
+<script>
+async function api(path,options={}){const r=await fetch(path,{headers:{'Content-Type':'application/json'},...options});const d=await r.json();if(!r.ok)throw new Error(d.detail||r.statusText);return d}
+async function addDoc(){try{const d=await api('/api/documents',{method:'POST',body:JSON.stringify({title:document.getElementById('title').value,source:document.getElementById('source').value,text:document.getElementById('doc').value})});document.getElementById('addOut').textContent=JSON.stringify(d,null,2)}catch(e){document.getElementById('addOut').textContent=e.message}}
+async function research(){try{const d=await api('/api/research',{method:'POST',body:JSON.stringify({question:document.getElementById('question').value,top_k:5})});document.getElementById('researchOut').textContent=JSON.stringify(d,null,2)}catch(e){document.getElementById('researchOut').textContent=e.message}}
+async function searchDocs(){try{const q=encodeURIComponent(document.getElementById('query').value);const d=await api('/api/search?q='+q+'&top_k=5');document.getElementById('searchOut').textContent=JSON.stringify(d,null,2)}catch(e){document.getElementById('searchOut').textContent=e.message}}
+api('/health').then(d=>document.getElementById('health').textContent='API healthy · '+d.documents+' indexed documents').catch(()=>document.getElementById('health').textContent='API not reachable yet');
+</script></body></html>
